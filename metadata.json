@@ -1,0 +1,6 @@
+{
+  "name": "M1955 Cinema",
+  "description": "M1955 Cinema - Kurdish & World Cinema Movie Streaming Hub to explore, watch, rate, and add movies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
