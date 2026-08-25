@@ -7,6 +7,7 @@ import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -128,9 +129,7 @@ fun VideoPlayerView(
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
                     setBackgroundColor(android.graphics.Color.BLACK)
-
-                    // Enable Hardware Acceleration for video rendering
-                    setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
                     settings.apply {
                         javaScriptEnabled = true
@@ -143,6 +142,7 @@ fun VideoPlayerView(
                         useWideViewPort = true
                         builtInZoomControls = false
                         displayZoomControls = false
+                        safeBrowsingEnabled = false
                         mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                         userAgentString = "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                     }
@@ -181,6 +181,15 @@ fun VideoPlayerView(
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
                             isLoading = false
+                        }
+
+                        override fun onRenderProcessGone(
+                            view: WebView?,
+                            detail: RenderProcessGoneDetail?
+                        ): Boolean {
+                            // Prevent app crash on renderer process termination in emulator
+                            isLoading = false
+                            return true
                         }
 
                         override fun shouldOverrideUrlLoading(

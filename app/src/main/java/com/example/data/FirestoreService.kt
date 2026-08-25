@@ -38,7 +38,6 @@ class FirestoreService {
         }
 
         val listener = db.collection(moviesCollection)
-            .orderBy("addedTimestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.w("FirestoreService", "Listen failed: ${error.message}")
@@ -48,30 +47,43 @@ class FirestoreService {
                 if (snapshot != null) {
                     val movies = snapshot.documents.mapNotNull { doc ->
                         try {
+                            val rawTitle = doc.getString("title") ?: doc.getString("titleKu") ?: doc.getString("titleEn") ?: "Movie"
+                            val titleEn = doc.getString("titleEn") ?: rawTitle
+                            val titleKu = doc.getString("titleKu") ?: rawTitle
+                            val overviewEn = doc.getString("overviewEn") ?: doc.getString("overview") ?: doc.getString("description") ?: ""
+                            val overviewKu = doc.getString("overviewKu") ?: doc.getString("overview") ?: overviewEn
+                            val category = doc.getString("category") ?: doc.getString("genre") ?: "Movies"
+                            val categoryKu = doc.getString("categoryKu") ?: category
+                            val posterUrl = doc.getString("posterUrl") ?: doc.getString("poster") ?: doc.getString("imageUrl") ?: doc.getString("image") ?: ""
+                            val videoUrl = doc.getString("videoUrl") ?: doc.getString("video_url") ?: doc.getString("url") ?: doc.getString("ai_studio_uri") ?: ""
+                            val rating = (doc.getDouble("imdbRating") ?: doc.getDouble("rating") ?: 8.5).toFloat()
+                            val year = doc.getLong("releaseYear")?.toInt() ?: doc.getLong("year")?.toInt() ?: 2024
+                            val duration = doc.getLong("durationMinutes")?.toInt() ?: doc.getLong("duration")?.toInt() ?: 120
+
                             Movie(
-                                id = doc.getLong("id") ?: doc.id.hashCode().toLong(),
-                                titleEn = doc.getString("titleEn") ?: "",
-                                titleKu = doc.getString("titleKu") ?: "",
-                                overviewEn = doc.getString("overviewEn") ?: "",
-                                overviewKu = doc.getString("overviewKu") ?: "",
-                                category = doc.getString("category") ?: "M1955 Cinema",
-                                categoryKu = doc.getString("categoryKu") ?: "سینەمای کوردی",
-                                durationMinutes = doc.getLong("durationMinutes")?.toInt() ?: 120,
-                                releaseYear = doc.getLong("releaseYear")?.toInt() ?: 2024,
-                                imdbRating = (doc.getDouble("imdbRating") ?: 8.5).toFloat(),
+                                id = doc.getLong("id") ?: doc.id.hashCode().toLong().let { if (it < 0) -it else it },
+                                titleEn = titleEn,
+                                titleKu = titleKu,
+                                overviewEn = overviewEn,
+                                overviewKu = overviewKu,
+                                category = category,
+                                categoryKu = categoryKu,
+                                durationMinutes = duration,
+                                releaseYear = year,
+                                imdbRating = rating,
                                 quality = doc.getString("quality") ?: "4K UHD",
                                 posterResName = doc.getString("posterResName") ?: "img_poster_kurdish",
-                                posterUrl = doc.getString("posterUrl") ?: "",
+                                posterUrl = posterUrl,
                                 bannerResName = doc.getString("bannerResName") ?: "img_hero_cinematic",
-                                bannerUrl = doc.getString("bannerUrl") ?: "",
-                                videoUrl = doc.getString("videoUrl") ?: "",
-                                director = doc.getString("director") ?: "",
-                                castMembers = doc.getString("castMembers") ?: "",
-                                availableLanguages = doc.getString("availableLanguages") ?: "Kurdî (Badîni, Soranî), English",
+                                bannerUrl = doc.getString("bannerUrl") ?: posterUrl,
+                                videoUrl = videoUrl,
+                                director = doc.getString("director") ?: "M1955 Director",
+                                castMembers = doc.getString("castMembers") ?: doc.getString("cast") ?: "Kurdish Cinema Stars",
+                                availableLanguages = doc.getString("availableLanguages") ?: "Kurdî (Badîni, Soranî)",
                                 isFeatured = doc.getBoolean("isFeatured") ?: false,
                                 isTrending = doc.getBoolean("isTrending") ?: true,
                                 isFavorite = false,
-                                isUserAdded = doc.getBoolean("isUserAdded") ?: false,
+                                isUserAdded = doc.getBoolean("isUserAdded") ?: true,
                                 addedTimestamp = doc.getLong("addedTimestamp") ?: System.currentTimeMillis()
                             )
                         } catch (e: Exception) {
