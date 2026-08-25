@@ -1113,8 +1113,8 @@
       }
     }
 
-    // ================= DYNAMIC VIDEO PLAYER MODULE =================
-    function renderVideoPlayer(url) {
+    // ================= DYNAMIC VIDEO PLAYER MODULE (IOS / SAFARI OPTIMIZED) =================
+    function renderVideoPlayer(url, autoPlay = false) {
       if (!url || typeof url !== 'string' || url.trim() === '' || url === '#' || url === 'null' || url === 'undefined') {
         return `
           <div class="w-full h-64 md:h-96 rounded-2xl bg-brand-bg/90 border border-brand-border flex flex-col items-center justify-center p-6 text-center text-gray-300">
@@ -1129,67 +1129,92 @@
 
       let cleanUrl = url.trim();
 
-      // 1. Convert Google Drive share links automatically from /view to /preview
-      if (cleanUrl.includes('drive.google.com')) {
+      // 1. Google Drive & Cloud Storage: Convert to /preview iframe to prevent iOS Safari 10s freeze
+      if (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com')) {
+        let drivePreviewUrl = cleanUrl;
         const driveIdMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (driveIdMatch && driveIdMatch[1]) {
-          cleanUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
+          drivePreviewUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
         } else if (cleanUrl.includes('/view')) {
-          cleanUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
+          drivePreviewUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
         }
+
         return `
-          <iframe
-            src="${cleanUrl}"
-            class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-            allow="autoplay; fullscreen"
-            allowfullscreen>
-          </iframe>
+          <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
+            <iframe
+              src="${drivePreviewUrl}"
+              class="w-full h-full border-0 rounded-2xl"
+              allow="autoplay; fullscreen"
+              allowfullscreen>
+            </iframe>
+          </div>
         `;
       }
 
-      // 2. Convert standard YouTube links to /embed/
+      // 2. YouTube Links (convert to embed with playsinline for iOS)
       if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
+        let ytEmbedUrl = cleanUrl;
         const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
         if (ytMatch && ytMatch[2].length === 11) {
-          cleanUrl = `https://www.youtube.com/embed/${ytMatch[2]}?autoplay=1`;
+          ytEmbedUrl = `https://www.youtube.com/embed/${ytMatch[2]}?playsinline=1&rel=0${autoPlay ? '&autoplay=1' : ''}`;
         }
         return `
-          <iframe
-            src="${cleanUrl}"
-            class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-            allow="autoplay; fullscreen"
-            allowfullscreen>
-          </iframe>
+          <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
+            <iframe
+              src="${ytEmbedUrl}"
+              class="w-full h-full border-0 rounded-2xl"
+              allow="autoplay; fullscreen"
+              allowfullscreen>
+            </iframe>
+          </div>
         `;
       }
 
-      // 3. Direct MP4 / WebM: If the link contains .mp4 or .webm
+      // 3. Direct HTML5 Media (MP4, WebM, MOV, M4V) with iOS Safari attributes & touch responsiveness
       const isDirectMedia = cleanUrl.includes('.mp4') || cleanUrl.includes('.webm') || cleanUrl.includes('.mov') || cleanUrl.includes('.ogg') || cleanUrl.includes('.m4v');
       if (isDirectMedia) {
         const mimeType = cleanUrl.includes('.webm') ? 'video/webm' : (cleanUrl.includes('.ogg') ? 'video/ogg' : 'video/mp4');
+
+        // Setup touch event listeners on next tick for iOS Safari gesture handling
+        setTimeout(() => {
+          setupIosVideoTouchControls(autoPlay);
+        }, 50);
+
         return `
-          <video controls autoplay playsinline class="w-full h-64 md:h-96 rounded-2xl shadow-lg object-contain bg-black">
-            <source src="${cleanUrl}" type="${mimeType}">
-            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300">
-              <p class="text-xs sm:text-sm font-bold text-red-300">ڤیدیۆ نەهاتە لێدان، تکایە لێنکێ سێرڤەری ل داتابەیسێ کۆنترۆڵ بکە</p>
-            </div>
-          </video>
+          <div class="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black flex items-center justify-center" id="videoTouchWrapper">
+            <video
+              id="m1955Html5Video"
+              controls
+              playsinline
+              webkit-playsinline
+              x5-playsinline
+              preload="auto"
+              class="w-full h-full rounded-2xl shadow-lg object-contain bg-black"
+            >
+              <source src="${cleanUrl}" type="${mimeType}">
+              <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300">
+                <p class="text-xs sm:text-sm font-bold text-red-300">ڤیدیۆ نەهاتە لێدان، تکایە لێنکێ سێرڤەری ل داتابەیسێ کۆنترۆڵ بکە</p>
+              </div>
+            </video>
+          </div>
         `;
       }
 
-      // 4. Embed Links & Cloud Storage (YouTube /embed/, Google Drive /preview, HLS .m3u8, or external iframe streamers)
+      // 4. Other Cloud Embeds, HLS (.m3u8), or External Streamers (iframe)
       if (cleanUrl.includes('/embed/') || cleanUrl.includes('/preview') || cleanUrl.includes('.m3u8') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
         return `
-          <iframe
-            src="${cleanUrl}"
-            class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-            allow="autoplay; fullscreen"
-            allowfullscreen>
-          </iframe>
+          <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
+            <iframe
+              src="${cleanUrl}"
+              class="w-full h-full border-0 rounded-2xl"
+              allow="autoplay; fullscreen"
+              allowfullscreen>
+            </iframe>
+          </div>
         `;
       }
 
-      // 5. Fallback UI
+      // 5. Fallback UI for invalid links
       return `
         <div class="w-full h-64 md:h-96 rounded-2xl bg-brand-bg/90 border border-brand-border flex flex-col items-center justify-center p-6 text-center text-gray-300">
           <div class="w-12 h-12 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center text-brand-red text-lg mb-3 shadow-lg">
@@ -1199,6 +1224,57 @@
           <p class="text-[11px] text-gray-400">لینکێ ڤیدیۆیێ بەردەست نینە یان نەدروستە.</p>
         </div>
       `;
+    }
+
+    // Helper: iOS Safari smooth touch & playback handler
+    function setupIosVideoTouchControls(autoPlay) {
+      const videoEl = document.getElementById('m1955Html5Video');
+      if (!videoEl) return;
+
+      let touchStartTime = 0;
+      let startX = 0;
+      let startY = 0;
+
+      videoEl.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+        if (e.touches && e.touches.length > 0) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      videoEl.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        let deltaX = 0;
+        let deltaY = 0;
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          deltaX = Math.abs(e.changedTouches[0].clientX - startX);
+          deltaY = Math.abs(e.changedTouches[0].clientY - startY);
+        }
+
+        // Quick clean tap (not scroll or swipe)
+        if (touchDuration < 280 && deltaX < 15 && deltaY < 15) {
+          if (videoEl.paused) {
+            const playPromise = videoEl.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => {
+                console.log('iOS tap play intercepted:', err);
+              });
+            }
+          } else {
+            videoEl.pause();
+          }
+        }
+      }, { passive: true });
+
+      if (autoPlay) {
+        const promise = videoEl.play();
+        if (promise !== undefined) {
+          promise.catch(() => {
+            // Unmuted autoplay blocked by iOS policy; awaiting user touch
+          });
+        }
+      }
     }
 
     // ================= MOVIE DETAIL MODAL & PLAYER =================
@@ -1228,7 +1304,7 @@
 
       // Setup Video Player dynamically (Direct MP4/WebM, Google Drive, YouTube, Embed, or Fallback)
       const dynamicVideoUrl = movie.videoUrl || movie.streamUrl || movie.embedUrl || movie.video_url || movie.url || '';
-      playerBox.innerHTML = renderVideoPlayer(dynamicVideoUrl);
+      playerBox.innerHTML = renderVideoPlayer(dynamicVideoUrl, autoPlay);
 
       // Watchlist Button inside modal
       const isFav = watchlistIds.includes(movie.id);
