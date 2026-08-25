@@ -1231,38 +1231,47 @@
       let cleanUrl = url.trim();
       const isIOS = isIosDevice();
 
+      // Universal standard iOS iframe permission attributes
+      const standardIframeAttributes = `
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+        referrerpolicy="no-referrer"
+        playsinline="true"
+        webkit-playsinline="true"
+        allowfullscreen
+      `;
+
       // 1. VK Video (vk.com / vkvideo.ru)
       if (cleanUrl.includes('vk.com') || cleanUrl.includes('vkvideo.ru')) {
         const formattedVkUrl = formatVkEmbedUrl(cleanUrl);
 
-        // For iPhone/iOS Users: High-end player container with sandbox permissions and primary direct iOS player action button
+        // Smart iOS Fallback Player for VK video with dedicated overlay button
         if (isIOS) {
           return `
             <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60 flex flex-col">
-              <div class="w-full h-64 md:h-96">
-                <iframe 
-                  src="${formattedVkUrl}" 
-                  class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg" 
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
-                  sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
-                  referrerpolicy="no-referrer"
-                  allowfullscreen>
-                </iframe>
-              </div>
-              <div class="bg-brand-bg/95 border-t border-brand-border/80 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
-                <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-300">
-                  <i class="fa-brands fa-apple text-brand-red text-base"></i>
-                  <span>بۆ پەخشێ بێ گیربوون و ب لەز ل سەر ئایفۆنێ:</span>
+              <!-- Elegant Native Stream Overlay for iPhone -->
+              <div class="bg-gradient-to-r from-red-950/90 via-brand-card to-black/90 border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-gray-200">
+                  <i class="fa-brands fa-apple text-brand-red text-sm"></i>
+                  <span>ڕێکخستنا تایبەت بۆ ئایفۆن (iOS)</span>
                 </div>
                 <a
                   href="${formattedVkUrl}"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                  class="px-3.5 py-1.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-black rounded-lg text-xs flex items-center gap-1.5 shadow-md shadow-red-950/60 transition-all cursor-pointer"
+                  title="پەخشکرنا ڕاستەوخۆ ل سەر ئایفۆنێ"
                 >
-                  <i class="fa-solid fa-circle-play text-sm"></i>
-                  <span>پەخشکرنا ڕاستەوخۆ (iOS Player)</span>
+                  <i class="fa-solid fa-play text-[10px]"></i>
+                  <span>▶ پەخشکرنا ڕاستەوخۆ ل سەر ئایفۆنێ</span>
                 </a>
+              </div>
+              <div class="w-full h-64 md:h-96 relative bg-black">
+                <iframe 
+                  src="${formattedVkUrl}" 
+                  class="w-full h-full rounded-b-2xl border-0 shadow-lg" 
+                  ${standardIframeAttributes}
+                ></iframe>
               </div>
             </div>
           `;
@@ -1274,10 +1283,8 @@
             <iframe 
               src="${formattedVkUrl}" 
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg" 
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
-              referrerpolicy="no-referrer"
-              allowfullscreen>
-            </iframe>
+              ${standardIframeAttributes}
+            ></iframe>
           </div>
         `;
       }
@@ -1294,29 +1301,28 @@
 
         if (isIOS) {
           return `
-            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60">
-              <div class="w-full h-64 md:h-96">
-                <iframe
-                  src="${drivePreviewUrl}"
-                  class="w-full h-full border-0 rounded-2xl"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                  allowfullscreen>
-                </iframe>
-              </div>
-              <div class="bg-brand-bg/95 border-t border-brand-border/80 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
-                <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-300">
-                  <i class="fa-brands fa-apple text-brand-red text-base"></i>
-                  <span>بۆ پەخشێ بێ دەستپێکرن و گیربوون:</span>
+            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60 flex flex-col">
+              <div class="bg-gradient-to-r from-red-950/90 via-brand-card to-black/90 border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-gray-200">
+                  <i class="fa-brands fa-apple text-brand-red text-sm"></i>
+                  <span>ڕێکخستنا تایبەت بۆ ئایفۆن (iOS)</span>
                 </div>
                 <a
                   href="${drivePreviewUrl}"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                  class="px-3.5 py-1.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-black rounded-lg text-xs flex items-center gap-1.5 shadow-md shadow-red-950/60 transition-all cursor-pointer"
                 >
-                  <i class="fa-solid fa-circle-play text-sm"></i>
-                  <span>پەخشکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (iOS Stream)</span>
+                  <i class="fa-solid fa-play text-[10px]"></i>
+                  <span>▶ پەخشکرنا ڕاستەوخۆ ل سەر ئایفۆنێ</span>
                 </a>
+              </div>
+              <div class="w-full h-64 md:h-96">
+                <iframe
+                  src="${drivePreviewUrl}"
+                  class="w-full h-full border-0 rounded-b-2xl"
+                  ${standardIframeAttributes}
+                ></iframe>
               </div>
             </div>
           `;
@@ -1327,9 +1333,8 @@
             <iframe
               src="${drivePreviewUrl}"
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-              allowfullscreen>
-            </iframe>
+              ${standardIframeAttributes}
+            ></iframe>
           </div>
         `;
       }
@@ -1346,14 +1351,13 @@
             <iframe
               src="${ytEmbedUrl}"
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-              allowfullscreen>
-            </iframe>
+              ${standardIframeAttributes}
+            ></iframe>
           </div>
         `;
       }
 
-      // 4. HTML5 Video (Direct MP4 / WebM): Use <video controls playsinline webkit-playsinline preload="metadata"> with no forced autoplay on iOS
+      // 4. HTML5 Video (Direct MP4 / WebM): Use <video controls playsinline webkit-playsinline preload="metadata">
       const isDirectMedia = cleanUrl.includes('.mp4') || cleanUrl.includes('.webm') || cleanUrl.includes('.mov') || cleanUrl.includes('.ogg') || cleanUrl.includes('.m4v');
       
       if (isDirectMedia) {
@@ -1383,16 +1387,49 @@
         `;
       }
 
-      // 5. External Streamers, Cloud Embeds, or HLS (Universal Responsive Iframe)
-      if (cleanUrl.includes('/embed/') || cleanUrl.includes('/preview') || cleanUrl.includes('.m3u8') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+      // 5. External Streamers, OK.ru, Cloud Embeds, or HLS (Universal Responsive Iframe with Strict iOS attributes)
+      if (cleanUrl.includes('ok.ru') || cleanUrl.includes('/embed/') || cleanUrl.includes('/preview') || cleanUrl.includes('.m3u8') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+        let directFallback = cleanUrl;
+        if (cleanUrl.includes('ok.ru/videoembed/')) {
+          directFallback = cleanUrl.replace('/videoembed/', '/video/');
+        }
+
+        if (isIOS) {
+          return `
+            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60 flex flex-col">
+              <div class="bg-gradient-to-r from-red-950/90 via-brand-card to-black/90 border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-gray-200">
+                  <i class="fa-brands fa-apple text-brand-red text-sm"></i>
+                  <span>ڕێکخستنا تایبەت بۆ ئایفۆن (iOS)</span>
+                </div>
+                <a
+                  href="${directFallback}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-3.5 py-1.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-black rounded-lg text-xs flex items-center gap-1.5 shadow-md shadow-red-950/60 transition-all cursor-pointer"
+                >
+                  <i class="fa-solid fa-play text-[10px]"></i>
+                  <span>▶ پەخشکرنا ڕاستەوخۆ ل سەر ئایفۆنێ</span>
+                </a>
+              </div>
+              <div class="w-full h-64 md:h-96">
+                <iframe
+                  src="${cleanUrl}"
+                  class="w-full h-full border-0 rounded-b-2xl shadow-lg"
+                  ${standardIframeAttributes}
+                ></iframe>
+              </div>
+            </div>
+          `;
+        }
+
         return `
           <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
             <iframe
               src="${cleanUrl}"
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-              allowfullscreen>
-            </iframe>
+              ${standardIframeAttributes}
+            ></iframe>
           </div>
         `;
       }
