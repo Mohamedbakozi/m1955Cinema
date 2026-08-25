@@ -128,7 +128,10 @@
           const overviewKu = data.overviewKu || data.overview || overviewEn || "کورتەیەک بەردەست نینە بۆ ڤی فلمی.";
           const category = data.category || data.genre || "Movies";
           const posterUrl = data.posterUrl || data.poster || data.imageUrl || data.image || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80";
-          const videoUrl = data.videoUrl || data.streamUrl || data.embedUrl || data.video_url || data.url || data.ai_studio_uri || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+          const video_url_1 = data.video_url_1 || data.videoUrl1 || data.video_url1 || data.videoUrl_1 || data.part1 || data.stream_url_1 || data.streamUrl1 || "";
+          const video_url_2 = data.video_url_2 || data.videoUrl2 || data.video_url2 || data.videoUrl_2 || data.part2 || data.stream_url_2 || data.streamUrl2 || "";
+          const video_url_3 = data.video_url_3 || data.videoUrl3 || data.video_url3 || data.part3 || "";
+          const videoUrl = video_url_1 || data.videoUrl || data.streamUrl || data.embedUrl || data.video_url || data.url || data.ai_studio_uri || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
           const streamUrl = data.streamUrl || data.embedUrl || videoUrl;
           const embedUrl = data.embedUrl || data.streamUrl || videoUrl;
           const rating = (data.imdbRating || data.rating || 8.5);
@@ -147,6 +150,13 @@
             posterUrl: posterUrl,
             bannerUrl: data.bannerUrl || posterUrl,
             videoUrl: videoUrl,
+            video_url_1: video_url_1 || videoUrl,
+            video_url_2: video_url_2,
+            video_url_3: video_url_3,
+            videoUrl1: video_url_1 || videoUrl,
+            videoUrl2: video_url_2,
+            videoUrl3: video_url_3,
+            parts: data.parts || [],
             streamUrl: streamUrl,
             embedUrl: embedUrl,
             director: data.director || "دەرهێنەرێ سینەمایی",
@@ -460,6 +470,11 @@
         </button>
       </div>
 
+      <!-- Multi-Part Video Switcher (Shown above video player if multiple parts exist) -->
+      <div id="modalPartsContainer" class="hidden w-full pt-16 pb-2.5 px-4 bg-gradient-to-b from-black via-black/80 to-transparent flex flex-wrap items-center justify-center gap-2.5 z-30">
+        <!-- Injected dynamically via renderPartsSwitcher -->
+      </div>
+
       <!-- Video / Stream Player Container -->
       <div id="modalPlayerContainer" class="relative w-full bg-black flex items-center justify-center p-1 sm:p-2">
         <!-- Injected dynamically via renderVideoPlayer -->
@@ -668,8 +683,13 @@
           </div>
 
           <div>
-            <label class="block text-gray-400 mb-1">لینکی پەخش یان ڤیدیۆیێ (Video URL / Stream)</label>
+            <label class="block text-gray-400 mb-1">لینکی پەخش یان ڤیدیۆیێ - پارتا ١ (Video URL 1 / Stream)</label>
             <input required id="formVideo" type="url" placeholder="https://..." class="w-full bg-brand-bg border border-brand-border p-2 rounded-lg text-white outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-gray-400 mb-1">لینکی پارتا ٢ (ئارەزوومەندانە / Optional - Video URL 2)</label>
+            <input id="formVideo2" type="url" placeholder="https://... (ئەگەر پارتا دوو هەبیت)" class="w-full bg-brand-bg border border-brand-border p-2 rounded-lg text-white outline-none" />
           </div>
 
           <div>
@@ -743,6 +763,10 @@
         quality: "4K UHD",
         posterUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80",
         videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        video_url_1: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        video_url_2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        videoUrl1: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
         director: "شەوکەت ئەمین کورکی",
         cast: "حوسێن حەسەن، نەزمی کرک",
         overviewEn: "Childhood friends Hussein and Alan decide to produce a film about the Anfal genocide in post-Saddam Kurdistan.",
@@ -761,6 +785,10 @@
         quality: "4K UHD",
         posterUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80",
         videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        video_url_1: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        video_url_2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        videoUrl1: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        videoUrl2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
         director: "بەهمەن قوبادی",
         cast: "نەڤید محەمەدزادە",
         overviewEn: "An emotional journey across the majestic mountains, heritage, and timeless spirit of Kurdistan.",
@@ -1432,13 +1460,96 @@
       }
     }
 
+    // Global tracking for currently opened movie in modal
+    let currentDetailMovie = null;
+    let currentActivePartIndex = 0;
+
+    // Multi-Part Video Stream Helper: Extracts all available video stream parts
+    function getMovieParts(movie) {
+      if (!movie) return [];
+      const parts = [];
+
+      // Check if structured parts array exists
+      if (Array.isArray(movie.parts) && movie.parts.length > 0) {
+        movie.parts.forEach((p, idx) => {
+          if (typeof p === 'string' && p.trim()) {
+            parts.push({ name: `پارتا ${idx + 1}`, url: p.trim() });
+          } else if (p && p.url && String(p.url).trim()) {
+            parts.push({ name: p.name || p.title || `پارتا ${idx + 1}`, url: String(p.url).trim() });
+          }
+        });
+        if (parts.length > 0) return parts;
+      }
+
+      // Check discrete fields: video_url_1, video_url_2, video_url_3
+      const p1 = (movie.video_url_1 || movie.videoUrl1 || movie.video_url || movie.videoUrl || movie.streamUrl || movie.embedUrl || movie.url || '').trim();
+      const p2 = (movie.video_url_2 || movie.videoUrl2 || movie.part2 || '').trim();
+      const p3 = (movie.video_url_3 || movie.videoUrl3 || movie.part3 || '').trim();
+
+      if (p1) parts.push({ name: 'پارتا 1', url: p1 });
+      if (p2) parts.push({ name: 'پارتا 2', url: p2 });
+      if (p3) parts.push({ name: 'پارتا 3', url: p3 });
+
+      return parts;
+    }
+
+    // Render Sleek Part Action Buttons
+    function renderPartsSwitcher(parts, activeIndex = 0) {
+      if (!parts || parts.length <= 1) return '';
+      return `
+        <div class="flex items-center gap-2.5 bg-black/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl">
+          ${parts.map((p, idx) => `
+            <button
+              type="button"
+              onclick="switchMoviePart(${idx})"
+              id="modalPartBtn_${idx}"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+                idx === activeIndex
+                  ? 'bg-gradient-to-r from-brand-red to-red-700 text-white shadow-lg shadow-red-950/60 scale-105 border border-red-500/40'
+                  : 'bg-brand-card/90 hover:bg-brand-cardHover text-gray-300 hover:text-white border border-white/5 active:scale-95'
+              }"
+              title="${p.name}"
+              aria-label="${p.name}"
+            >
+              <i class="fa-solid ${idx === activeIndex ? 'fa-circle-play text-white' : 'fa-play text-gray-400'} text-xs"></i>
+              <span>${p.name}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Automatically update the video player stream source without reloading the page
+    function switchMoviePart(index) {
+      if (!currentDetailMovie) return;
+      const parts = getMovieParts(currentDetailMovie);
+      if (!parts[index]) return;
+      currentActivePartIndex = index;
+
+      // Update Part Buttons UI
+      const partsContainer = document.getElementById('modalPartsContainer');
+      if (partsContainer) {
+        partsContainer.innerHTML = renderPartsSwitcher(parts, index);
+      }
+
+      // Update Video Player Stream directly & smoothly
+      const playerBox = document.getElementById('modalPlayerContainer');
+      if (playerBox) {
+        playerBox.innerHTML = renderVideoPlayer(parts[index].url, true);
+      }
+    }
+
     // ================= MOVIE DETAIL MODAL & PLAYER =================
     function openMovieDetailModal(movieId, autoPlay = false) {
       const movie = allMovies.find(m => String(m.id) === String(movieId));
       if (!movie) return;
 
+      currentDetailMovie = movie;
+      currentActivePartIndex = 0;
+
       const modal = document.getElementById('movieDetailModal');
       const playerBox = document.getElementById('modalPlayerContainer');
+      const partsContainer = document.getElementById('modalPartsContainer');
 
       document.getElementById('modalMovieTitleKu').innerText = movie.titleKu;
       document.getElementById('modalMovieTitleEn').innerText = movie.titleEn;
@@ -1457,8 +1568,18 @@
       aiReviewEl.classList.add('hidden');
       aiReviewEl.innerText = '';
 
-      // Setup Video Player dynamically (Direct MP4/WebM, Google Drive, YouTube, Embed, or Fallback)
-      const dynamicVideoUrl = movie.videoUrl || movie.streamUrl || movie.embedUrl || movie.video_url || movie.url || '';
+      // Multi-Part Video Handler
+      const parts = getMovieParts(movie);
+      if (parts.length > 1) {
+        partsContainer.innerHTML = renderPartsSwitcher(parts, 0);
+        partsContainer.classList.remove('hidden');
+      } else {
+        partsContainer.innerHTML = '';
+        partsContainer.classList.add('hidden');
+      }
+
+      // Setup Video Player dynamically (Direct MP4/WebM, Google Drive, YouTube, VK, Embed, or Fallback)
+      const dynamicVideoUrl = parts.length > 0 ? parts[0].url : (movie.videoUrl || movie.streamUrl || movie.embedUrl || movie.video_url || movie.url || '');
       playerBox.innerHTML = renderVideoPlayer(dynamicVideoUrl, autoPlay);
 
       // Watchlist Button inside modal
@@ -1479,6 +1600,12 @@
     function closeMovieDetailModal() {
       document.getElementById('movieDetailModal').classList.add('hidden');
       document.getElementById('modalPlayerContainer').innerHTML = '';
+      const partsContainer = document.getElementById('modalPartsContainer');
+      if (partsContainer) {
+        partsContainer.innerHTML = '';
+        partsContainer.classList.add('hidden');
+      }
+      currentDetailMovie = null;
     }
 
     // ================= GEMINI 1.5 FLASH KURDISH ASSISTANT =================
@@ -1648,6 +1775,9 @@ Provide your response strictly in polite and friendly Kurdish (Badîni dialect),
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> د فایەربەیس دا دهێتە پاشەکەوتکرن...';
 
+      const v1 = document.getElementById('formVideo').value.trim();
+      const v2 = document.getElementById('formVideo2') ? document.getElementById('formVideo2').value.trim() : '';
+
       const newMovie = {
         titleKu: document.getElementById('formTitleKu').value.trim(),
         titleEn: document.getElementById('formTitleEn').value.trim(),
@@ -1658,7 +1788,12 @@ Provide your response strictly in polite and friendly Kurdish (Badîni dialect),
         quality: "4K UHD",
         posterUrl: document.getElementById('formPoster').value.trim(),
         bannerUrl: document.getElementById('formPoster').value.trim(),
-        videoUrl: document.getElementById('formVideo').value.trim(),
+        videoUrl: v1,
+        video_url: v1,
+        video_url_1: v1,
+        video_url_2: v2,
+        videoUrl1: v1,
+        videoUrl2: v2,
         director: "دەرهێنەرێ سینەمایی",
         castMembers: "ستارێن بەشداربوو",
         overviewKu: document.getElementById('formOverview').value.trim() || "فلمەکێ تایبەت و ناوازە د ناڤ سینەمایا M1955 دا.",
