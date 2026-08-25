@@ -1134,12 +1134,15 @@
       }
 
       let cleanUrl = url.trim();
+      const isApple = isIosOrSafari();
 
-      // 1. VK Video (vk.com / vkvideo.ru): Always use official iframe embed format with full permissions
+      // 1. VK Video (vk.com / vkvideo.ru)
       if (cleanUrl.includes('vk.com') || cleanUrl.includes('vkvideo.ru')) {
         let vkEmbedUrl = cleanUrl;
+        let vkDirectLink = cleanUrl;
         if (cleanUrl.includes('video_ext.php')) {
           vkEmbedUrl = cleanUrl.startsWith('//') ? 'https:' + cleanUrl : (cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl);
+          vkDirectLink = vkEmbedUrl;
         } else {
           const vkMatch = cleanUrl.match(/video(-?\d+)_(\d+)/);
           const hashMatch = cleanUrl.match(/[?&]hash=([a-zA-Z0-9_-]+)/);
@@ -1148,8 +1151,43 @@
             const id = vkMatch[2];
             const hash = hashMatch ? `&hash=${hashMatch[1]}` : '';
             vkEmbedUrl = `https://vk.com/video_ext.php?oid=${oid}&id=${id}${hash}&hd=2`;
+            vkDirectLink = `https://vk.com/video${oid}_${id}`;
           }
         }
+
+        // For iPhone/iOS Safari users, provide an enhanced dual UI (Responsive Embedded Player + Prominent Direct Play Button)
+        if (isApple) {
+          return `
+            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60">
+              <div class="w-full h-64 md:h-96">
+                <iframe
+                  src="${vkEmbedUrl}"
+                  class="w-full h-full border-0 rounded-2xl"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allowfullscreen
+                  referrerpolicy="no-referrer">
+                </iframe>
+              </div>
+              <div class="bg-brand-bg/95 border-t border-brand-border/80 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
+                <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-300">
+                  <i class="fa-brands fa-apple text-brand-red text-base"></i>
+                  <span>ئەگەر ل سەر ئایفۆنێ گیر بوو، پەخشی ڕاستەوخۆ بکە:</span>
+                </div>
+                <a
+                  href="${vkEmbedUrl}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                >
+                  <i class="fa-solid fa-circle-play text-sm"></i>
+                  <span>ڤەکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (Direct Play)</span>
+                </a>
+              </div>
+            </div>
+          `;
+        }
+
+        // Standard Android / PC Player
         return `
           <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
             <iframe
@@ -1171,6 +1209,36 @@
           drivePreviewUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
         } else if (cleanUrl.includes('/view')) {
           drivePreviewUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
+        }
+
+        if (isApple) {
+          return `
+            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60">
+              <div class="w-full h-64 md:h-96">
+                <iframe
+                  src="${drivePreviewUrl}"
+                  class="w-full h-full border-0 rounded-2xl"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <div class="bg-brand-bg/95 border-t border-brand-border/80 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
+                <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-300">
+                  <i class="fa-brands fa-apple text-brand-red text-base"></i>
+                  <span>بۆ پەخشێ بێ دەستپێکرن و گیربوون:</span>
+                </div>
+                <a
+                  href="${drivePreviewUrl}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
+                >
+                  <i class="fa-solid fa-circle-play text-sm"></i>
+                  <span>ڤەکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (Direct Play)</span>
+                </a>
+              </div>
+            </div>
+          `;
         }
 
         return `
