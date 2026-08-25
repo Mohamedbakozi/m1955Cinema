@@ -1147,6 +1147,46 @@
       return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     }
 
+    // VK Link Converter: Parses any VK video URL (vk.com, vkvideo.ru) to official embed endpoint
+    function formatVkEmbedUrl(url) {
+      if (!url) return '';
+      let clean = url.trim();
+
+      // If already in video_ext.php format
+      if (clean.includes('video_ext.php')) {
+        if (clean.startsWith('//')) return 'https:' + clean;
+        if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+        return 'https://' + clean;
+      }
+
+      // Match pattern like video-123456_789012 or video123456_789012
+      const vkMatch = clean.match(/video(-?\d+)_(\d+)/);
+      const hashMatch = clean.match(/[?&]hash=([a-zA-Z0-9_-]+)/);
+
+      if (vkMatch) {
+        const oid = vkMatch[1];
+        const id = vkMatch[2];
+        const hashParam = hashMatch ? `&hash=${hashMatch[1]}` : '';
+        return `https://vk.com/video_ext.php?oid=${oid}&id=${id}${hashParam}&hd=2`;
+      }
+
+      // Check URL parameters if present
+      try {
+        const parsed = new URL(clean.startsWith('http') ? clean : 'https://' + clean);
+        const oid = parsed.searchParams.get('oid');
+        const id = parsed.searchParams.get('id');
+        const hash = parsed.searchParams.get('hash');
+        if (oid && id) {
+          const hashParam = hash ? `&hash=${hash}` : '';
+          return `https://vk.com/video_ext.php?oid=${oid}&id=${id}${hashParam}&hd=2`;
+        }
+      } catch (e) {
+        // Fallback to original
+      }
+
+      return clean.startsWith('http') ? clean : 'https://' + clean;
+    }
+
     function renderVideoPlayer(url, autoPlay = false) {
       if (!url || typeof url !== 'string' || url.trim() === '' || url === '#' || url === 'null' || url === 'undefined') {
         return `
@@ -1165,46 +1205,34 @@
 
       // 1. VK Video (vk.com / vkvideo.ru)
       if (cleanUrl.includes('vk.com') || cleanUrl.includes('vkvideo.ru')) {
-        let vkEmbedUrl = cleanUrl;
-        if (cleanUrl.includes('video_ext.php')) {
-          vkEmbedUrl = cleanUrl.startsWith('//') ? 'https:' + cleanUrl : (cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl);
-        } else {
-          const vkMatch = cleanUrl.match(/video(-?\d+)_(\d+)/);
-          const hashMatch = cleanUrl.match(/[?&]hash=([a-zA-Z0-9_-]+)/);
-          if (vkMatch) {
-            const oid = vkMatch[1];
-            const id = vkMatch[2];
-            const hash = hashMatch ? `&hash=${hashMatch[1]}` : '';
-            vkEmbedUrl = `https://vk.com/video_ext.php?oid=${oid}&id=${id}${hash}&hd=2`;
-          }
-        }
+        const formattedVkUrl = formatVkEmbedUrl(cleanUrl);
 
-        // For iPhone/iOS Users (Safari & Chrome): Render responsive player with clean iOS Stream Direct Action Button
+        // For iPhone/iOS Users: Render official iframe with iOS stream attributes and fallback button
         if (isIOS) {
           return `
-            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60">
+            <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60 flex flex-col">
               <div class="w-full h-64 md:h-96">
-                <iframe
-                  src="${vkEmbedUrl}"
-                  class="w-full h-full border-0 rounded-2xl"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
-                  allowfullscreen
-                  referrerpolicy="no-referrer">
+                <iframe 
+                  src="${formattedVkUrl}" 
+                  class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg" 
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
+                  referrerpolicy="no-referrer"
+                  allowfullscreen>
                 </iframe>
               </div>
               <div class="bg-brand-bg/95 border-t border-brand-border/80 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
                 <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-300">
                   <i class="fa-brands fa-apple text-brand-red text-base"></i>
-                  <span>بۆ پەخشێ بێ گیربوون ل سەر ئایفۆن و سافاری:</span>
+                  <span>ئەگەر ل سەر ئایفۆنێ یان سافاری گیر بوو:</span>
                 </div>
                 <a
-                  href="${vkEmbedUrl}"
+                  href="${formattedVkUrl}"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
                 >
-                  <i class="fa-solid fa-circle-play text-sm"></i>
-                  <span>پەخشکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (iOS Stream)</span>
+                  <i class="fa-solid fa-up-right-from-square text-xs"></i>
+                  <span>ڤەکرنا ڤیدیۆیێ د سێرڤەرەکێ دی دا</span>
                 </a>
               </div>
             </div>
@@ -1214,12 +1242,12 @@
         // Standard Android / PC Player
         return `
           <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
-            <iframe
-              src="${vkEmbedUrl}"
-              class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
-              allowfullscreen
-              referrerpolicy="no-referrer">
+            <iframe 
+              src="${formattedVkUrl}" 
+              class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg" 
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
+              referrerpolicy="no-referrer"
+              allowfullscreen>
             </iframe>
           </div>
         `;
