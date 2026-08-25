@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>M1955 Cinema - کۆنترۆڵا ئەدمینی (Admin Dashboard)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#E50914',
+              redHover: '#b80710',
+              gold: '#E5A93C',
+              bg: '#070A10',
+              card: '#0F172A',
+              cardHover: '#1E293B',
+              border: '#1E293B'
+            }
+          },
+          fontFamily: {
+            sans: ['Rabar', 'Vazirmatn', 'Noto Sans Arabic', 'Segoe UI', 'Tahoma', 'sans-serif'],
+            display: ['Montserrat', 'Impact', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #070A10;
+      color: #F3F4F6;
+      font-family: 'Vazirmatn', 'Rabar', sans-serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-brand-bg text-gray-100 flex flex-col antialiased selection:bg-brand-red selection:text-white">
+
+  <!-- Header / Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-brand-card/90 backdrop-blur-md border-b border-brand-border px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xl">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="flex items-center gap-2 group" title="گەڕانەوە بۆ ئەپێ">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-red to-red-600 flex items-center justify-center shadow-lg shadow-red-950/60 group-hover:scale-105 transition-transform">
+          <i class="fa-solid fa-film text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-black tracking-wider text-white">M1955 <span class="text-brand-red text-xs px-1.5 py-0.5 rounded bg-brand-red/10 border border-brand-red/30">ADMIN</span></h1>
+          <p class="text-[10px] text-gray-400">کۆنترۆڵا زێدەکرنا فلیمان</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="px-3.5 py-2 rounded-xl bg-brand-card hover:bg-brand-cardHover border border-brand-border text-xs font-bold text-gray-300 hover:text-white transition flex items-center gap-2">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span>زڤڕین بۆ ئەپێ</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    
+    <!-- Top Hero Banner -->
+    <div class="bg-gradient-to-r from-brand-card via-brand-card to-red-950/40 border border-brand-border rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+      <div class="relative z-10">
+        <span class="px-2.5 py-1 rounded-full bg-brand-red/20 border border-brand-red/40 text-brand-red text-[11px] font-bold inline-block mb-2">
+          <i class="fa-solid fa-shield-halved ml-1"></i> دەروازێ ئەدمینێ سینەمایا M1955
+        </span>
+        <h2 class="text-xl sm:text-2xl font-black text-white mb-1">زێدەکرنا فلمێ نووی د ناڤ فایەربەیس دا</h2>
+        <p class="text-xs sm:text-sm text-gray-400">فلمێن ئێک پارت یان دوو پارت زێدە بکە، ڕاستەوخۆ د ئەپ و مۆبایلێ دا دهێنە نیشاندان.</p>
+      </div>
+    </div>
+
+    <!-- Admin Form Container -->
+    <div class="bg-brand-card border border-brand-border rounded-2xl p-5 sm:p-7 shadow-2xl">
+      <form id="adminMovieForm" onsubmit="handleMovieSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Title Kurdish -->
+          <div>
+            <label class="block text-gray-300 font-bold mb-1.5">
+              <i class="fa-solid fa-heading text-brand-red ml-1"></i> ناڤێ فلمی ب کوردی (Title KU) *
+            </label>
+            <input required id="titleKu" type="text" placeholder="بۆ نموونە: بیرهاتنێن ل سەر بەرێ" class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition" />
+          </div>
+
+          <!-- Title English -->
+          <div>
+            <label class="block text-gray-300 font-bold mb-1.5">
+              <i class="fa-solid fa-font text-brand-gold ml-1"></i> ناڤێ فلمی ب ئینگلیزی (Title EN) *
+            </label>
+            <input required id="titleEn" type="text" placeholder="e.g. Memories on Stone" class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition font-display" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Category -->
+          <div>
+            <label class="block text-gray-300 font-bold mb-1.5">
+              <i class="fa-solid fa-tags text-blue-400 ml-1"></i> پۆلین (Category) *
+            </label>
+            <select id="category" class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition cursor-pointer">
+              <option value="Movies">Movies (فلم)</option>
+              <option value="Action">Action (ئەکشن)</option>
+              <option value="Drama">Drama (دراما)</option>
+              <option value="Animation">Animation (ئەنیمەیشن)</option>
+              <option value="subtitle">subtitle (ژێرنووس)</option>
+              <option value="Film cartoon">Film cartoon (کارتۆن)</option>
+              <option value="Drama kurdi">Drama kurdi (درامای کوردی)</option>
+            </select>
+          </div>
+
+          <!-- Release Year -->
+          <div>
+            <label class="block text-gray-300 font-bold mb-1.5">
+              <i class="fa-regular fa-calendar text-yellow-400 ml-1"></i> ساڵا دەرچوونێ *
+            </label>
+            <input required id="releaseYear" type="number" value="2024" min="1900" max="2030" class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition" />
+          </div>
+
+          <!-- Quality -->
+          <div>
+            <label class="block text-gray-300 font-bold mb-1.5">
+              <i class="fa-solid fa-tv text-purple-400 ml-1"></i> کوالیتی (Quality)
+            </label>
+            <select id="quality" class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition cursor-pointer">
+              <option value="4K UHD">4K UHD</option>
+              <option value="FHD 1080p">FHD 1080p</option>
+              <option value="HD 720p">HD 720p</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Poster URL -->
+        <div>
+          <label class="block text-gray-300 font-bold mb-1.5">
+            <i class="fa-regular fa-image text-emerald-400 ml-1"></i> لینکی وێنەیێ پۆستەری (Poster URL) *
+          </label>
+          <input required id="posterUrl" type="url" placeholder="https://images.unsplash.com/... یان وێنەیێ فلمی" class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition" />
+        </div>
+
+        <!-- Multi-Part Video URL Inputs -->
+        <div class="bg-brand-bg/80 border border-brand-border rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex items-center gap-2 text-brand-gold font-bold text-sm border-b border-brand-border/80 pb-2">
+            <i class="fa-solid fa-circle-play text-brand-red"></i>
+            <span>لینکێن پەخش و ڤیدیۆیێ (Multi-Part Video Streaming)</span>
+          </div>
+
+          <!-- Field 1: video_url_1 (Required) -->
+          <div>
+            <label class="block text-gray-200 font-bold mb-1">
+              لێنکێ پارتا 1 / تەواوی (video_url_1) <span class="text-brand-red">*</span>
+            </label>
+            <p class="text-[11px] text-gray-400 mb-2">لینکێ ڤیدیۆیێ، VK Video، گووگڵ درایڤ، یان ڕاستەوخۆ MP4/Embed دانێ.</p>
+            <input required id="video_url_1" name="video_url_1" type="url" placeholder="https://vk.com/video... یان https://commondatastorage..." class="w-full bg-brand-card border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition" />
+          </div>
+
+          <!-- Field 2: video_url_2 (Optional) -->
+          <div>
+            <label class="block text-gray-200 font-bold mb-1">
+              لێنکێ پارتا 2 (ئاریشەیی / دەستنیشانکری) (video_url_2)
+            </label>
+            <p class="text-[11px] text-gray-400 mb-2">ئەگەر فلمێ تە یێ دوو بەش یان پارتا دوو بیت ڤێرێ لێ زێدە بکە (ئارەزوومەندانە).</p>
+            <input id="video_url_2" name="video_url_2" type="url" placeholder="https://vk.com/video... (ئەگەر پارتا دوو هەبیت)" class="w-full bg-brand-card border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition" />
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div>
+          <label class="block text-gray-300 font-bold mb-1.5">
+            <i class="fa-solid fa-align-right text-gray-400 ml-1"></i> کورتیا فلمی (Overview)
+          </label>
+          <textarea id="overviewKu" rows="3" placeholder="کورتەیەک دەربارەی چیرۆک و ڕووداوێن ڤی فلمی بنووسە..." class="w-full bg-brand-bg border border-brand-border focus:border-brand-red p-3 rounded-xl text-white outline-none transition"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-2">
+          <button id="adminSubmitBtn" type="submit" class="w-full py-3.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-[0.99] font-black text-sm text-white rounded-xl shadow-xl shadow-red-950/60 transition flex items-center justify-center gap-2.5 cursor-pointer">
+            <i class="fa-solid fa-cloud-arrow-up text-base"></i>
+            <span>ڕاستەوخۆ د فایەربەیس دا بەڵاڤ بکە</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Live Status / Recent Movies Preview -->
+    <div class="bg-brand-card border border-brand-border rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-brand-red"></i>
+          <span>دوماهیک فلمێن فایەربەیس</span>
+        </h3>
+        <span id="moviesCountBadge" class="px-2.5 py-0.5 rounded-full bg-brand-border text-[11px] font-bold text-gray-300">
+          د بارکرنێ دایە...
+        </span>
+      </div>
+
+      <div id="adminMoviesList" class="divide-y divide-brand-border/60 max-h-72 overflow-y-auto">
+        <div class="py-4 text-center text-xs text-gray-400">
+          <i class="fa-solid fa-spinner fa-spin mr-1"></i> داتایێن نوو دهێنە وەرگرتن...
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Firebase Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      onSnapshot, 
+      addDoc, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6i47tkTkJiMOvtCM7FPf7BfVV2kfCz_8",
+      projectId: "m1955cinema",
+      storageBucket: "m1955cinema.firebasestorage.app",
+      messagingSenderId: "839904802588",
+      appId: "1:839904802588:android:11edc2bac935fe36ca6cd9"
+    };
+
+    let db = null;
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      window.m1955_admin_db = db;
+      window.m1955_admin_addDoc = addDoc;
+      window.m1955_admin_collection = collection;
+      window.m1955_admin_serverTimestamp = serverTimestamp;
+
+      // Realtime listener for movies
+      const moviesCol = collection(db, "movies");
+      onSnapshot(moviesCol, (snapshot) => {
+        const countBadge = document.getElementById('moviesCountBadge');
+        if (countBadge) countBadge.innerText = `${snapshot.size} فلم د فایەربەیس دانە`;
+
+        const listEl = document.getElementById('adminMoviesList');
+        if (!listEl) return;
+
+        if (snapshot.empty) {
+          listEl.innerHTML = '<div class="py-4 text-center text-xs text-gray-400">هیچ فلمەک د فایەربەیس دا نینە.</div>';
+          return;
+        }
+
+        let html = '';
+        snapshot.forEach((doc) => {
+          const m = doc.data();
+          const p1 = m.video_url_1 || m.videoUrl1 || m.video_url || m.videoUrl || '';
+          const p2 = m.video_url_2 || m.videoUrl2 || '';
+          const hasMultiPart = !!p2;
+
+          html += `
+            <div class="py-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <img src="${m.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100'}" class="w-10 h-14 object-cover rounded-lg border border-brand-border shadow" alt="Poster" />
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">${m.titleKu || m.title || 'بێ ناڤ'}</h4>
+                  <p class="text-[11px] text-gray-400 font-display">${m.titleEn || ''} • ${m.category || 'Movies'} • ${m.releaseYear || '2024'}</p>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    ${hasMultiPart ? '<span class="px-2 py-0.5 bg-red-950/80 text-brand-red border border-red-800/40 text-[10px] font-bold rounded-md">2 پارت</span>' : '<span class="px-2 py-0.5 bg-gray-800 text-gray-300 text-[10px] font-bold rounded-md">1 پارت</span>'}
+                    <span class="text-[10px] text-gray-500 truncate max-w-[200px] sm:max-w-xs">${p1}</span>
+                  </div>
+                </div>
+              </div>
+              <a href="index.html" class="px-3 py-1.5 rounded-lg bg-brand-bg hover:bg-brand-cardHover border border-brand-border text-xs text-gray-300 hover:text-white transition">
+                <i class="fa-solid fa-play ml-1"></i> دیتن
+              </a>
+            </div>
+          `;
+        });
+        listEl.innerHTML = html;
+      });
+    } catch (e) {
+      console.error("Firebase init error in admin:", e);
+    }
+
+    // Submit handler
+    window.handleMovieSubmit = async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('adminSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> د فایەربەیس دا دهێتە پاشەکەوتکرن...';
+
+      const v1 = document.getElementById('video_url_1').value.trim();
+      const v2 = document.getElementById('video_url_2').value.trim();
+
+      const movieData = {
+        titleKu: document.getElementById('titleKu').value.trim(),
+        titleEn: document.getElementById('titleEn').value.trim(),
+        category: document.getElementById('category').value,
+        releaseYear: parseInt(document.getElementById('releaseYear').value) || 2024,
+        quality: document.getElementById('quality').value || "4K UHD",
+        durationMinutes: 120,
+        imdbRating: 8.5,
+        posterUrl: document.getElementById('posterUrl').value.trim(),
+        bannerUrl: document.getElementById('posterUrl').value.trim(),
+        video_url_1: v1,
+        video_url_2: v2,
+        video_url: v1,
+        videoUrl: v1,
+        videoUrl1: v1,
+        videoUrl2: v2,
+        director: "دەرهێنەرێ سینەمایی",
+        castMembers: "ستارێن بەشداربوو",
+        overviewKu: document.getElementById('overviewKu').value.trim() || "فلمەکێ تایبەت د ناڤ سینەمایا M1955 دا.",
+        overviewEn: document.getElementById('overviewKu').value.trim() || "Exciting cinema release.",
+        isFeatured: false,
+        isTrending: true,
+        addedTimestamp: Date.now()
+      };
+
+      try {
+        if (window.m1955_admin_db && window.m1955_admin_addDoc && window.m1955_admin_collection) {
+          await window.m1955_admin_addDoc(window.m1955_admin_collection(window.m1955_admin_db, "movies"), {
+            ...movieData,
+            created_at: window.m1955_admin_serverTimestamp ? window.m1955_admin_serverTimestamp() : new Date()
+          });
+          alert('فلم ب سەرکەوتوویی د فایەربەیس دا هاتە زێدەکرن!');
+          document.getElementById('adminMovieForm').reset();
+        } else {
+          alert('پەیوەندی ب فایەربەیس نەهاتە کرن، تکایە ئینتەرنێتێ کۆنترۆڵ بکە.');
+        }
+      } catch (err) {
+        console.error("Firestore save error:", err);
+        alert('خەلەتیەک ڕوویدا: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up text-base"></i><span>ڕاستەوخۆ د فایەربەیس دا بەڵاڤ بکە</span>';
+      }
+    };
+  </script>
+</body>
+</html>
