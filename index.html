@@ -1158,7 +1158,35 @@
         `;
       }
 
-      // 2. YouTube Links (convert to embed with playsinline for iOS)
+      // 2. VK Video (vk.com / vkvideo.ru): Transform to video_ext.php iframe embed with no-referrer
+      if (cleanUrl.includes('vk.com') || cleanUrl.includes('vkvideo.ru')) {
+        let vkEmbedUrl = cleanUrl;
+        if (cleanUrl.includes('video_ext.php')) {
+          vkEmbedUrl = cleanUrl.startsWith('//') ? 'https:' + cleanUrl : (cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl);
+        } else {
+          const vkMatch = cleanUrl.match(/video(-?\d+)_(\d+)/);
+          const hashMatch = cleanUrl.match(/[?&]hash=([a-zA-Z0-9_-]+)/);
+          if (vkMatch) {
+            const oid = vkMatch[1];
+            const id = vkMatch[2];
+            const hash = hashMatch ? `&hash=${hashMatch[1]}` : '';
+            vkEmbedUrl = `https://vk.com/video_ext.php?oid=${oid}&id=${id}${hash}&hd=2`;
+          }
+        }
+        return `
+          <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
+            <iframe
+              src="${vkEmbedUrl}"
+              class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              allowfullscreen
+              referrerpolicy="no-referrer">
+            </iframe>
+          </div>
+        `;
+      }
+
+      // 3. YouTube Links (convert to embed with playsinline for iOS)
       if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
         let ytEmbedUrl = cleanUrl;
         const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
@@ -1177,7 +1205,7 @@
         `;
       }
 
-      // 3. Direct Media (.mp4, .webm, .mov, .ogg, .m4v)
+      // 4. Direct Media (.mp4, .webm, .mov, .ogg, .m4v)
       const isDirectMedia = cleanUrl.includes('.mp4') || cleanUrl.includes('.webm') || cleanUrl.includes('.mov') || cleanUrl.includes('.ogg') || cleanUrl.includes('.m4v');
       
       if (isDirectMedia) {
