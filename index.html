@@ -128,7 +128,9 @@
           const overviewKu = data.overviewKu || data.overview || overviewEn || "کورتەیەک بەردەست نینە بۆ ڤی فلمی.";
           const category = data.category || data.genre || "Movies";
           const posterUrl = data.posterUrl || data.poster || data.imageUrl || data.image || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80";
-          const videoUrl = data.videoUrl || data.video_url || data.url || data.ai_studio_uri || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+          const videoUrl = data.videoUrl || data.streamUrl || data.embedUrl || data.video_url || data.url || data.ai_studio_uri || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+          const streamUrl = data.streamUrl || data.embedUrl || videoUrl;
+          const embedUrl = data.embedUrl || data.streamUrl || videoUrl;
           const rating = (data.imdbRating || data.rating || 8.5);
           const year = data.releaseYear || data.year || 2024;
           const duration = data.durationMinutes || data.duration || 120;
@@ -145,6 +147,8 @@
             posterUrl: posterUrl,
             bannerUrl: data.bannerUrl || posterUrl,
             videoUrl: videoUrl,
+            streamUrl: streamUrl,
+            embedUrl: embedUrl,
             director: data.director || "دەرهێنەرێ سینەمایی",
             cast: data.castMembers || data.cast || "ستارێن سینەمایا کوردی",
             overviewEn: overviewEn,
@@ -434,8 +438,8 @@
       </button>
 
       <!-- Video / Stream Player Container -->
-      <div id="modalPlayerContainer" class="relative w-full aspect-video bg-black flex items-center justify-center">
-        <!-- Injected dynamically -->
+      <div id="modalPlayerContainer" class="relative w-full bg-black flex items-center justify-center p-1 sm:p-2">
+        <!-- Injected dynamically via renderVideoPlayer -->
       </div>
 
       <!-- Modal Information Body -->
@@ -1109,6 +1113,94 @@
       }
     }
 
+    // ================= DYNAMIC VIDEO PLAYER MODULE =================
+    function renderVideoPlayer(url) {
+      if (!url || typeof url !== 'string' || url.trim() === '' || url === '#' || url === 'null' || url === 'undefined') {
+        return `
+          <div class="w-full h-64 md:h-96 rounded-2xl bg-brand-bg/90 border border-brand-border flex flex-col items-center justify-center p-6 text-center text-gray-300">
+            <div class="w-12 h-12 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center text-brand-red text-lg mb-3 shadow-lg">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <p class="text-xs sm:text-sm font-bold text-red-300 mb-1">ڤیدیۆ نەهاتە لێدان، تکایە لێنکێ سێرڤەری ل داتابەیسێ کۆنترۆڵ بکە</p>
+            <p class="text-[11px] text-gray-400">لینکێ ڤیدیۆیێ بەردەست نینە یان نەدروستە.</p>
+          </div>
+        `;
+      }
+
+      let cleanUrl = url.trim();
+
+      // 1. Convert Google Drive share links automatically from /view to /preview
+      if (cleanUrl.includes('drive.google.com')) {
+        const driveIdMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (driveIdMatch && driveIdMatch[1]) {
+          cleanUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
+        } else if (cleanUrl.includes('/view')) {
+          cleanUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
+        }
+        return `
+          <iframe
+            src="${cleanUrl}"
+            class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
+            allow="autoplay; fullscreen"
+            allowfullscreen>
+          </iframe>
+        `;
+      }
+
+      // 2. Convert standard YouTube links to /embed/
+      if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
+        const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+        if (ytMatch && ytMatch[2].length === 11) {
+          cleanUrl = `https://www.youtube.com/embed/${ytMatch[2]}?autoplay=1`;
+        }
+        return `
+          <iframe
+            src="${cleanUrl}"
+            class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
+            allow="autoplay; fullscreen"
+            allowfullscreen>
+          </iframe>
+        `;
+      }
+
+      // 3. Direct MP4 / WebM: If the link contains .mp4 or .webm
+      const isDirectMedia = cleanUrl.includes('.mp4') || cleanUrl.includes('.webm') || cleanUrl.includes('.mov') || cleanUrl.includes('.ogg') || cleanUrl.includes('.m4v');
+      if (isDirectMedia) {
+        const mimeType = cleanUrl.includes('.webm') ? 'video/webm' : (cleanUrl.includes('.ogg') ? 'video/ogg' : 'video/mp4');
+        return `
+          <video controls autoplay playsinline class="w-full h-64 md:h-96 rounded-2xl shadow-lg object-contain bg-black">
+            <source src="${cleanUrl}" type="${mimeType}">
+            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300">
+              <p class="text-xs sm:text-sm font-bold text-red-300">ڤیدیۆ نەهاتە لێدان، تکایە لێنکێ سێرڤەری ل داتابەیسێ کۆنترۆڵ بکە</p>
+            </div>
+          </video>
+        `;
+      }
+
+      // 4. Embed Links & Cloud Storage (YouTube /embed/, Google Drive /preview, HLS .m3u8, or external iframe streamers)
+      if (cleanUrl.includes('/embed/') || cleanUrl.includes('/preview') || cleanUrl.includes('.m3u8') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+        return `
+          <iframe
+            src="${cleanUrl}"
+            class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
+            allow="autoplay; fullscreen"
+            allowfullscreen>
+          </iframe>
+        `;
+      }
+
+      // 5. Fallback UI
+      return `
+        <div class="w-full h-64 md:h-96 rounded-2xl bg-brand-bg/90 border border-brand-border flex flex-col items-center justify-center p-6 text-center text-gray-300">
+          <div class="w-12 h-12 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center text-brand-red text-lg mb-3 shadow-lg">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <p class="text-xs sm:text-sm font-bold text-red-300 mb-1">ڤیدیۆ نەهاتە لێدان، تکایە لێنکێ سێرڤەری ل داتابەیسێ کۆنترۆڵ بکە</p>
+          <p class="text-[11px] text-gray-400">لینکێ ڤیدیۆیێ بەردەست نینە یان نەدروستە.</p>
+        </div>
+      `;
+    }
+
     // ================= MOVIE DETAIL MODAL & PLAYER =================
     function openMovieDetailModal(movieId, autoPlay = false) {
       const movie = allMovies.find(m => String(m.id) === String(movieId));
@@ -1134,25 +1226,9 @@
       aiReviewEl.classList.add('hidden');
       aiReviewEl.innerText = '';
 
-      // Setup Video Player (Direct MP4 or Embed Link)
-      if (autoPlay || movie.videoUrl.endsWith('.mp4')) {
-        playerBox.innerHTML = `
-          <video controls autoplay class="w-full h-full object-contain">
-            <source src="${movie.videoUrl}" type="video/mp4">
-            براوزەرێ تە پشتەڤانیا پەخشێ ڤیدیۆیێ ناکەت.
-          </video>
-        `;
-      } else {
-        playerBox.innerHTML = `
-          <div class="relative w-full h-full bg-cover bg-center" style="background-image: url('${movie.bannerUrl || movie.posterUrl}')">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-              <a href="${movie.videoUrl}" target="_blank" class="px-5 py-2.5 bg-brand-red hover:bg-brand-redHover font-bold rounded-xl text-white flex items-center gap-2 shadow-xl text-xs sm:text-sm">
-                <i class="fa-solid fa-play"></i> پەخشکرنا فلمی (لینکی سەرەکی)
-              </a>
-            </div>
-          </div>
-        `;
-      }
+      // Setup Video Player dynamically (Direct MP4/WebM, Google Drive, YouTube, Embed, or Fallback)
+      const dynamicVideoUrl = movie.videoUrl || movie.streamUrl || movie.embedUrl || movie.video_url || movie.url || '';
+      playerBox.innerHTML = renderVideoPlayer(dynamicVideoUrl);
 
       // Watchlist Button inside modal
       const isFav = watchlistIds.includes(movie.id);
