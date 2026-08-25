@@ -429,15 +429,15 @@
   </main>
 
   <!-- ================= MOVIE DETAIL MODAL SHEET ================= -->
-  <div id="movieDetailModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+  <div id="movieDetailModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 pb-24 overflow-y-auto">
     <div class="relative bg-brand-card border border-brand-border rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl my-6 animate-in fade-in zoom-in duration-150">
       
       <!-- Floating Back to Home & Controls -->
       <div class="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none">
         <!-- Sleek Floating Back to Home Button -->
         <button 
-          onclick="closeMovieDetailModal(); window.scrollTo({top:0, behavior:'smooth'});" 
-          class="pointer-events-auto flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 hover:border-white/40 shadow-xl transition-all duration-200 active:scale-95 group cursor-pointer" 
+          onclick="closeMovieDetailModal(); switchNavTab('home');" 
+          class="pointer-events-auto flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 hover:border-white/40 shadow-xl transition-all duration-200 active:scale-95 group cursor-pointer" 
           title="زڤرین بۆ سەرەکی (Back to Home)"
           aria-label="Back to Home"
         >
@@ -449,8 +449,8 @@
 
         <!-- Close 'X' Button -->
         <button 
-          onclick="closeMovieDetailModal()" 
-          class="pointer-events-auto w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white backdrop-blur-md border border-white/20 hover:border-white/40 flex items-center justify-center shadow-xl transition-all duration-200 active:scale-95 cursor-pointer" 
+          onclick="closeMovieDetailModal();" 
+          class="pointer-events-auto w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-gray-300 hover:text-white backdrop-blur-md border border-white/20 hover:border-white/40 flex items-center justify-center shadow-xl transition-all duration-200 active:scale-95 cursor-pointer" 
           title="داخستن (Close)"
           aria-label="Close modal"
         >
@@ -686,30 +686,30 @@
   </div>
 
   <!-- ================= FIXED BOTTOM NAVIGATION BAR (IDENTICAL TO MOBILE APP) ================= -->
-  <nav class="fixed bottom-0 inset-x-0 z-40 glass-bar border-t border-brand-border/80 px-4 py-2">
+  <nav class="fixed bottom-0 inset-x-0 z-[60] glass-bar border-t border-brand-border/80 px-4 py-2 shadow-2xl">
     <div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center">
       
       <!-- Tab 1: سەرهەکی (Home) -->
-      <button onclick="switchNavTab('home')" id="navTabHome" class="flex flex-col items-center justify-center py-1 text-brand-red transition">
+      <button onclick="switchNavTab('home')" id="navTabHome" class="flex flex-col items-center justify-center py-1 text-brand-red transition active:scale-95 cursor-pointer">
         <i class="fa-solid fa-house text-base sm:text-lg mb-0.5"></i>
         <span class="text-[10px] font-bold">سەرهەکی</span>
       </button>
 
       <!-- Tab 2: پۆلین (Explore/Categories) -->
-      <button onclick="switchNavTab('explore')" id="navTabExplore" class="flex flex-col items-center justify-center py-1 text-gray-400 hover:text-white transition">
+      <button onclick="switchNavTab('explore')" id="navTabExplore" class="flex flex-col items-center justify-center py-1 text-gray-400 hover:text-white transition active:scale-95 cursor-pointer">
         <i class="fa-solid fa-compass text-base sm:text-lg mb-0.5"></i>
         <span class="text-[10px] font-bold">پۆلین</span>
       </button>
 
       <!-- Tab 3: لیستا من (My List/Watchlist) -->
-      <button onclick="switchNavTab('watchlist')" id="navTabWatchlist" class="flex flex-col items-center justify-center py-1 text-gray-400 hover:text-white transition relative">
+      <button onclick="switchNavTab('watchlist')" id="navTabWatchlist" class="flex flex-col items-center justify-center py-1 text-gray-400 hover:text-white transition active:scale-95 cursor-pointer relative">
         <i class="fa-solid fa-bookmark text-base sm:text-lg mb-0.5"></i>
         <span class="text-[10px] font-bold">لیستا من</span>
         <span id="navWatchlistBadge" class="hidden absolute top-0 right-5 w-2 h-2 bg-brand-red rounded-full"></span>
       </button>
 
       <!-- Tab 4: ڕێکخستن (Settings) -->
-      <button onclick="switchNavTab('settings')" id="navTabSettings" class="flex flex-col items-center justify-center py-1 text-gray-400 hover:text-white transition">
+      <button onclick="switchNavTab('settings')" id="navTabSettings" class="flex flex-col items-center justify-center py-1 text-gray-400 hover:text-white transition active:scale-95 cursor-pointer">
         <i class="fa-solid fa-gear text-base sm:text-lg mb-0.5"></i>
         <span class="text-[10px] font-bold">ڕێکخستن</span>
       </button>
@@ -1045,6 +1045,12 @@
     // 4. Navigation Tab Switcher (Bottom Bar)
     function switchNavTab(tab) {
       activeNavTab = tab;
+
+      // Always close movie detail modal, AI modal, and admin modal smoothly
+      closeMovieDetailModal();
+      closeAiModal();
+      closeAdminModal();
+
       const views = {
         home: document.getElementById('homeView'),
         explore: document.getElementById('exploreView'),
@@ -1137,10 +1143,8 @@
     }
 
     // ================= UNIVERSAL VIDEO PLAYER & EMBED PARSER =================
-    function isIosOrSafari() {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      return isIOS || isSafari;
+    function isIosDevice() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     }
 
     function renderVideoPlayer(url, autoPlay = false) {
@@ -1157,15 +1161,13 @@
       }
 
       let cleanUrl = url.trim();
-      const isApple = isIosOrSafari();
+      const isIOS = isIosDevice();
 
       // 1. VK Video (vk.com / vkvideo.ru)
       if (cleanUrl.includes('vk.com') || cleanUrl.includes('vkvideo.ru')) {
         let vkEmbedUrl = cleanUrl;
-        let vkDirectLink = cleanUrl;
         if (cleanUrl.includes('video_ext.php')) {
           vkEmbedUrl = cleanUrl.startsWith('//') ? 'https:' + cleanUrl : (cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl);
-          vkDirectLink = vkEmbedUrl;
         } else {
           const vkMatch = cleanUrl.match(/video(-?\d+)_(\d+)/);
           const hashMatch = cleanUrl.match(/[?&]hash=([a-zA-Z0-9_-]+)/);
@@ -1174,19 +1176,18 @@
             const id = vkMatch[2];
             const hash = hashMatch ? `&hash=${hashMatch[1]}` : '';
             vkEmbedUrl = `https://vk.com/video_ext.php?oid=${oid}&id=${id}${hash}&hd=2`;
-            vkDirectLink = `https://vk.com/video${oid}_${id}`;
           }
         }
 
-        // For iPhone/iOS Safari users, provide an enhanced dual UI (Responsive Embedded Player + Prominent Direct Play Button)
-        if (isApple) {
+        // For iPhone/iOS Users (Safari & Chrome): Render responsive player with clean iOS Stream Direct Action Button
+        if (isIOS) {
           return `
             <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60">
               <div class="w-full h-64 md:h-96">
                 <iframe
                   src="${vkEmbedUrl}"
                   class="w-full h-full border-0 rounded-2xl"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
                   allowfullscreen
                   referrerpolicy="no-referrer">
                 </iframe>
@@ -1194,7 +1195,7 @@
               <div class="bg-brand-bg/95 border-t border-brand-border/80 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
                 <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-300">
                   <i class="fa-brands fa-apple text-brand-red text-base"></i>
-                  <span>ئەگەر ل سەر ئایفۆنێ گیر بوو، پەخشی ڕاستەوخۆ بکە:</span>
+                  <span>بۆ پەخشێ بێ گیربوون ل سەر ئایفۆن و سافاری:</span>
                 </div>
                 <a
                   href="${vkEmbedUrl}"
@@ -1203,7 +1204,7 @@
                   class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
                 >
                   <i class="fa-solid fa-circle-play text-sm"></i>
-                  <span>ڤەکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (Direct Play)</span>
+                  <span>پەخشکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (iOS Stream)</span>
                 </a>
               </div>
             </div>
@@ -1216,7 +1217,7 @@
             <iframe
               src="${vkEmbedUrl}"
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
               allowfullscreen
               referrerpolicy="no-referrer">
             </iframe>
@@ -1234,7 +1235,7 @@
           drivePreviewUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
         }
 
-        if (isApple) {
+        if (isIOS) {
           return `
             <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-brand-border/60">
               <div class="w-full h-64 md:h-96">
@@ -1257,7 +1258,7 @@
                   class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-brand-red to-red-700 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all"
                 >
                   <i class="fa-solid fa-circle-play text-sm"></i>
-                  <span>ڤەکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (Direct Play)</span>
+                  <span>پەخشکرنا ڤیدیۆیێ ب شێوازێ ڕاستەوخۆ (iOS Stream)</span>
                 </a>
               </div>
             </div>
@@ -1281,7 +1282,7 @@
         let ytEmbedUrl = cleanUrl;
         const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
         if (ytMatch && ytMatch[2].length === 11) {
-          ytEmbedUrl = `https://www.youtube.com/embed/${ytMatch[2]}?playsinline=1&rel=0${autoPlay ? '&autoplay=1' : ''}`;
+          ytEmbedUrl = `https://www.youtube.com/embed/${ytMatch[2]}?playsinline=1&rel=0${(!isIOS && autoPlay) ? '&autoplay=1' : ''}`;
         }
         return `
           <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
@@ -1295,14 +1296,14 @@
         `;
       }
 
-      // 4. HTML5 Video (Direct MP4 / WebM): Use <video controls playsinline webkit-playsinline preload="metadata">
+      // 4. HTML5 Video (Direct MP4 / WebM): Use <video controls playsinline webkit-playsinline preload="metadata"> with no forced autoplay on iOS
       const isDirectMedia = cleanUrl.includes('.mp4') || cleanUrl.includes('.webm') || cleanUrl.includes('.mov') || cleanUrl.includes('.ogg') || cleanUrl.includes('.m4v');
       
       if (isDirectMedia) {
         const mimeType = cleanUrl.includes('.webm') ? 'video/webm' : (cleanUrl.includes('.ogg') ? 'video/ogg' : 'video/mp4');
 
         setTimeout(() => {
-          setupIosVideoTouchControls(autoPlay);
+          setupIosVideoTouchControls(!isIOS && autoPlay);
         }, 50);
 
         return `
