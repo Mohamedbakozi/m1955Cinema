@@ -1113,7 +1113,7 @@
       }
     }
 
-    // ================= DYNAMIC VIDEO PLAYER MODULE (IOS / SAFARI OPTIMIZED) =================
+    // ================= UNIVERSAL VIDEO PLAYER & EMBED PARSER =================
     function isIosOrSafari() {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -1134,31 +1134,8 @@
       }
 
       let cleanUrl = url.trim();
-      const isAppleDevice = isIosOrSafari();
 
-      // 1. Google Drive Links: Convert automatically to /preview iframe for smooth iOS/Safari streaming
-      if (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com')) {
-        let drivePreviewUrl = cleanUrl;
-        const driveIdMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (driveIdMatch && driveIdMatch[1]) {
-          drivePreviewUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
-        } else if (cleanUrl.includes('/view')) {
-          drivePreviewUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
-        }
-
-        return `
-          <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
-            <iframe
-              src="${drivePreviewUrl}"
-              class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; fullscreen"
-              allowfullscreen>
-            </iframe>
-          </div>
-        `;
-      }
-
-      // 2. VK Video (vk.com / vkvideo.ru): Transform to video_ext.php iframe embed with no-referrer
+      // 1. VK Video (vk.com / vkvideo.ru): Always use official iframe embed format with full permissions
       if (cleanUrl.includes('vk.com') || cleanUrl.includes('vkvideo.ru')) {
         let vkEmbedUrl = cleanUrl;
         if (cleanUrl.includes('video_ext.php')) {
@@ -1186,7 +1163,29 @@
         `;
       }
 
-      // 3. YouTube Links (convert to embed with playsinline for iOS)
+      // 2. Google Drive / Cloud: Automatically convert /view to /preview and render inside iframe
+      if (cleanUrl.includes('drive.google.com') || cleanUrl.includes('docs.google.com')) {
+        let drivePreviewUrl = cleanUrl;
+        const driveIdMatch = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (driveIdMatch && driveIdMatch[1]) {
+          drivePreviewUrl = `https://drive.google.com/file/d/${driveIdMatch[1]}/preview`;
+        } else if (cleanUrl.includes('/view')) {
+          drivePreviewUrl = cleanUrl.replace(/\/view(\?.*)?$/, '/preview');
+        }
+
+        return `
+          <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
+            <iframe
+              src="${drivePreviewUrl}"
+              class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              allowfullscreen>
+            </iframe>
+          </div>
+        `;
+      }
+
+      // 3. YouTube Links: Convert to embed format
       if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
         let ytEmbedUrl = cleanUrl;
         const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
@@ -1198,37 +1197,19 @@
             <iframe
               src="${ytEmbedUrl}"
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; fullscreen"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
               allowfullscreen>
             </iframe>
           </div>
         `;
       }
 
-      // 4. Direct Media (.mp4, .webm, .mov, .ogg, .m4v)
+      // 4. HTML5 Video (Direct MP4 / WebM): Use <video controls playsinline webkit-playsinline preload="metadata">
       const isDirectMedia = cleanUrl.includes('.mp4') || cleanUrl.includes('.webm') || cleanUrl.includes('.mov') || cleanUrl.includes('.ogg') || cleanUrl.includes('.m4v');
       
       if (isDirectMedia) {
         const mimeType = cleanUrl.includes('.webm') ? 'video/webm' : (cleanUrl.includes('.ogg') ? 'video/ogg' : 'video/mp4');
 
-        // FOR IOS / SAFARI USERS: Force Iframe HTML wrapper embed to bypass native range/freeze bugs
-        if (isAppleDevice) {
-          const wrapperHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><style>html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center;}video{width:100%;height:100%;object-fit:contain;background:#000;}</style></head><body><video controls playsinline webkit-playsinline x5-playsinline preload="none" style="width:100%;height:100%;"><source src="${cleanUrl}" type="${mimeType}"></video></body></html>`;
-          const encodedSrc = 'data:text/html;charset=utf-8,' + encodeURIComponent(wrapperHtml);
-
-          return `
-            <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
-              <iframe
-                src="${encodedSrc}"
-                class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-                allow="autoplay; fullscreen"
-                allowfullscreen>
-              </iframe>
-            </div>
-          `;
-        }
-
-        // NON-IOS / STANDARD BROWSER FALLBACK:
         setTimeout(() => {
           setupIosVideoTouchControls(autoPlay);
         }, 50);
@@ -1241,8 +1222,8 @@
               playsinline
               webkit-playsinline
               x5-playsinline
-              preload="none"
-              class="w-full h-full rounded-2xl shadow-lg object-contain bg-black"
+              preload="metadata"
+              class="w-full h-64 md:h-96 rounded-2xl shadow-lg object-contain bg-black"
             >
               <source src="${cleanUrl}" type="${mimeType}">
               <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300">
@@ -1253,21 +1234,21 @@
         `;
       }
 
-      // 4. Other Cloud Embeds, HLS (.m3u8), or External Streamers (iframe)
+      // 5. External Streamers, Cloud Embeds, or HLS (Universal Responsive Iframe)
       if (cleanUrl.includes('/embed/') || cleanUrl.includes('/preview') || cleanUrl.includes('.m3u8') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
         return `
           <div class="w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg bg-black">
             <iframe
               src="${cleanUrl}"
               class="w-full h-64 md:h-96 rounded-2xl border-0 shadow-lg"
-              allow="autoplay; fullscreen"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
               allowfullscreen>
             </iframe>
           </div>
         `;
       }
 
-      // 5. Fallback UI for invalid links
+      // 6. Fallback UI for unsupported or invalid links
       return `
         <div class="w-full h-64 md:h-96 rounded-2xl bg-brand-bg/90 border border-brand-border flex flex-col items-center justify-center p-6 text-center text-gray-300">
           <div class="w-12 h-12 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center text-brand-red text-lg mb-3 shadow-lg">
