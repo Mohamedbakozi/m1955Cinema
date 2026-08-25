@@ -432,18 +432,31 @@
   <div id="movieDetailModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
     <div class="relative bg-brand-card border border-brand-border rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl my-6 animate-in fade-in zoom-in duration-150">
       
-      <!-- Floating Back / Home & Close Buttons -->
-      <div class="absolute top-3.5 left-3.5 right-3.5 z-30 flex items-center justify-between pointer-events-none">
-        <!-- Back to Home Floating Button -->
-        <button onclick="closeMovieDetailModal(); window.scrollTo({top:0, behavior:'smooth'});" class="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/75 hover:bg-black text-white backdrop-blur-md border border-white/20 shadow-2xl transition-all active:scale-95 group" title="زڤرین بۆ لاپەرێ سەرەکی">
-          <i class="fa-solid fa-house text-xs text-brand-gold group-hover:scale-110 transition-transform"></i>
-          <span class="text-xs font-bold text-gray-100">سەرەکی</span>
-          <i class="fa-solid fa-angle-left text-[11px] text-gray-400"></i>
+      <!-- Floating Back to Home & Controls -->
+      <div class="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none">
+        <!-- Sleek Floating Back to Home Button -->
+        <button 
+          onclick="closeMovieDetailModal(); window.scrollTo({top:0, behavior:'smooth'});" 
+          class="pointer-events-auto flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 hover:border-white/40 shadow-xl transition-all duration-200 active:scale-95 group cursor-pointer" 
+          title="زڤرین بۆ سەرەکی (Back to Home)"
+          aria-label="Back to Home"
+        >
+          <svg class="w-4 h-4 text-white group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <span class="text-xs sm:text-sm font-bold tracking-wide text-gray-100 group-hover:text-white">سەرەکی</span>
         </button>
 
         <!-- Close 'X' Button -->
-        <button onclick="closeMovieDetailModal()" class="pointer-events-auto w-8 h-8 rounded-full bg-black/75 hover:bg-black text-gray-300 hover:text-white backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl transition-all active:scale-95" title="داخستن">
-          <i class="fa-solid fa-xmark text-sm"></i>
+        <button 
+          onclick="closeMovieDetailModal()" 
+          class="pointer-events-auto w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white backdrop-blur-md border border-white/20 hover:border-white/40 flex items-center justify-center shadow-xl transition-all duration-200 active:scale-95 cursor-pointer" 
+          title="داخستن (Close)"
+          aria-label="Close modal"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
         </button>
       </div>
 
